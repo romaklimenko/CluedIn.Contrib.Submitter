@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{56C44F1D-7C4
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CluedIn.Contrib.Submitter", "src\CluedIn.Contrib.Submitter\CluedIn.Contrib.Submitter.csproj", "{30C8A683-D2D5-4818-8EE7-855B1CBC3E65}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F8CE749A-B653-4A03-AE8D-65B132565FCC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CluedIn.Contrib.Submitter.Tests", "tests\CluedIn.Contrib.Submitter.Tests\CluedIn.Contrib.Submitter.Tests.csproj", "{A3EE839F-98A7-4445-A201-2F764FFD9A32}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,8 +24,13 @@ Global
 		{30C8A683-D2D5-4818-8EE7-855B1CBC3E65}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30C8A683-D2D5-4818-8EE7-855B1CBC3E65}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30C8A683-D2D5-4818-8EE7-855B1CBC3E65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3EE839F-98A7-4445-A201-2F764FFD9A32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3EE839F-98A7-4445-A201-2F764FFD9A32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3EE839F-98A7-4445-A201-2F764FFD9A32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3EE839F-98A7-4445-A201-2F764FFD9A32}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{30C8A683-D2D5-4818-8EE7-855B1CBC3E65} = {56C44F1D-7C45-459E-A033-003CAE0A252E}
+		{A3EE839F-98A7-4445-A201-2F764FFD9A32} = {F8CE749A-B653-4A03-AE8D-65B132565FCC}
 	EndGlobalSection
 EndGlobal
