@@ -148,3 +148,6 @@ node_modules/
 # Coverage
 coverage/
 coverage.info
+
+# TODO files
+*.todo
