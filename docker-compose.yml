@@ -1,0 +1,21 @@
+services:
+  submitter:
+    image: cluedin-contrib-submitter
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:8080"
+    depends_on:
+      - rabbitmq
+
+  rabbitmq:
+    image: cluedinprod.azurecr.io/bitnami/rabbitmq:3.12.2-debian-11-r25
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "15692:15692"
+    environment:
+      - RABBITMQ_USERNAME=cluedin
+      - RABBITMQ_PASSWORD=cluedin
+    hostname: cluedin-dev
