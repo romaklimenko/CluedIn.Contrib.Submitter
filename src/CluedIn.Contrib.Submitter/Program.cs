@@ -1,4 +1,3 @@
-using CluedIn.Contrib.Submitter;
 using CluedIn.Contrib.Submitter.WebApi;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -12,55 +12,66 @@ public static class Endpoints
     private static readonly ApplicationContext s_applicationContext = new(new WindsorContainer());
 
     public static async Task<IResult> SubmitData(
-        HttpContext httpContext,
-        [FromQuery(Name = "entity_type")] string? entityTypeConfiguration = null,
-        [FromQuery(Name = "origin_entity_code")]
-        string? originEntityCodeConfiguration = null,
-        [FromQuery(Name = "vocabulary_prefix")]
-        string? vocabularyPrefixConfiguration = null,
-        [FromQuery(Name = "entity_codes")] string? entityCodesConfiguration = null,
-        [FromQuery(Name = "incoming_edges")] string? incomingEntityEdgesConfiguration = null,
-        [FromQuery(Name = "outgoing_edges")] string? outgoingEntityEdgesConfiguration = null,
+        HttpRequest httpRequest,
+        [FromQuery(Name = "entity_type")] string? entityTypeConfigString = null,
+        [FromQuery(Name = "origin_code")] string? originCodeConfigString = null,
+        [FromQuery(Name = "vocab_prefix")] string? vocabPrefixConfigString = null,
+        [FromQuery(Name = "codes")] string? codesConfigString = null,
+        [FromQuery(Name = "in_edges")] string? incomingEdgesConfigString = null,
+        [FromQuery(Name = "out_edges")] string? outgoingEdgesConfig = null,
         [FromHeader(Name = "Authorization")] string? authorization = null)
     {
         // TODO: Step 0: Authorization
 
         // Step 1: Context
-        var context = new Context(
-            httpContext.Request.QueryString.ToString(),
-            entityTypeConfiguration,
-            originEntityCodeConfiguration,
-            vocabularyPrefixConfiguration,
-            entityCodesConfiguration,
-            incomingEntityEdgesConfiguration,
-            outgoingEntityEdgesConfiguration);
-
-        if (context.HasErrors)
+        if (!Context.TryCreate(
+                httpRequest.QueryString.ToString(),
+                entityTypeConfigString,
+                originCodeConfigString,
+                vocabPrefixConfigString,
+                codesConfigString,
+                incomingEdgesConfigString,
+                outgoingEdgesConfig,
+                out var context,
+                out var errors))
         {
-            return context.ToResult(HttpStatusCode.BadRequest);
+            return Results.BadRequest(
+                new
+                {
+                    query_string = httpRequest.QueryString,
+                    status_code = 400,
+                    status_description = "Bad Request",
+                    errors
+                });
         }
 
         // Step2: Deserialize and validate payload
         using var jsonDocument = await TryParseJsonDocument();
-        if (jsonDocument != null && jsonDocument.RootElement.ValueKind != JsonValueKind.Array)
-        {
-            context.Errors.Add("The payload must be a JSON array.");
-        }
-
-        if (context.HasErrors || jsonDocument is null)
+        if (jsonDocument is null)
         {
             return context.ToResult(HttpStatusCode.BadRequest);
         }
 
 
-        // TODO: Step 3: For each record in the payload, create and publish a clue
+        // Step 3: For each record in the payload, create and publish a clue
         foreach (var jsonElement in jsonDocument.RootElement.EnumerateArray())
         {
-            jsonElement.Flatten().ToClue(context);
+            try
+            {
+                jsonElement.Flatten().ToClue(context);
+            }
+            catch (Exception e)
+            {
+                context.Errors.Add(
+                    $"Error when processing a record.\n" +
+                    $"Record:{jsonElement.ToString()}\n" +
+                    $"Exception:{e}\n{e.Message}");
+                return context.ToResult(HttpStatusCode.BadRequest);
+            }
         }
 
-        // TODO: Step 4: Response
-        return context.ToResult();
+        // Step 4: Response
+        return context.ToResult(HttpStatusCode.OK);
 
         // var clue = new Clue(
         //     new EntityCode("/Person", "Submitter", Guid.NewGuid()),
@@ -73,7 +84,14 @@ public static class Endpoints
         {
             try
             {
-                return await JsonDocument.ParseAsync(httpContext.Request.Body);
+                var doc = await JsonDocument.ParseAsync(httpRequest.Body);
+                if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    return doc;
+                }
+
+                context.Errors.Add("The payload must be a JSON array.");
+                return null;
             }
             catch (Exception e)
             {

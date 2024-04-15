@@ -6,17 +6,13 @@ namespace CluedIn.Contrib.Submitter.WebApi;
 public static class WebApiExtensions
 {
     /// <summary>
-    /// Converts Context to IResult with status code.
+    ///     Converts Context to IResult with status code.
     /// </summary>
     /// <param name="context">Context</param>
     /// <param name="httpStatusCode">HttpStatusCode</param>
     /// <returns>Result.Json</returns>
-    public static IResult ToResult(this Context context, HttpStatusCode? httpStatusCode = null)
+    public static IResult ToResult(this Context context, HttpStatusCode httpStatusCode)
     {
-        httpStatusCode ??= context.HasErrors
-            ? HttpStatusCode.InternalServerError
-            : HttpStatusCode.OK;
-
         var submitDataResponse = new SubmitDataResponse
         {
             QueryString = context.QueryString,
