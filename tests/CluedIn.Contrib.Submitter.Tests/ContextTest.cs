@@ -253,7 +253,7 @@ public class ContextTest
             OriginCodeConfigString,
             VocabPrefixConfigString,
             null,
-            "/Manager|/Employee#Sharepoint:",
+            "/WorksFor|Salesforce:org_id",
             "/Works|/Organization#:org_id",
             out var context,
             out var errors);
@@ -264,7 +264,7 @@ public class ContextTest
         Assert.Equal(
             "Could not parse entity edge configuration. " +
             "The value must be in the format '/EdgeType|/EntityType#Origin:id', " +
-            "but found: '/Manager|/Employee#Sharepoint:'",
+            "but found: '/WorksFor|Salesforce:org_id'",
             errors[0]);
         Assert.Equal(
             "Could not parse entity edge configuration. " +

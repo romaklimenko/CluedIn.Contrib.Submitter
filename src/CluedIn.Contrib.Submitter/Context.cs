@@ -16,6 +16,7 @@ public class Context
     public readonly string VocabularyPrefixConfiguration;
     public readonly List<EdgeConfiguration> IncomingEdgesConfiguration;
     public readonly List<EdgeConfiguration> OutgoingEdgesConfiguration;
+
     // TODO: get from JWT
     public readonly Guid OrganizationId = Guid.NewGuid();
 
@@ -115,7 +116,7 @@ public class Context
                 return null;
             }
 
-            var parts = codeConfigStringLocal.Split(':');
+            var parts = codeConfigStringLocal.Split(':', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 2 &&
                 !string.IsNullOrWhiteSpace(parts[0]) &&
                 !string.IsNullOrWhiteSpace(parts[1]))
@@ -162,13 +163,15 @@ public class Context
                          .Split(',', StringSplitOptions.RemoveEmptyEntries))
             {
                 // /At|/Organization#Salesforce:organization_id
-                var partsByPipe = edgeConfiguration.Split('|');
+                var partsByPipe = edgeConfiguration.Split('|', StringSplitOptions.RemoveEmptyEntries);
                 var entityEdgeType = partsByPipe[0];
-                var partsByHash = partsByPipe[1].Split('#', StringSplitOptions.RemoveEmptyEntries);
-                var entityType = partsByHash[0];
-                var partsByColon = partsByHash[1].Split(':');
-                var origin = partsByColon[0];
-                var idPropertyName = partsByColon[1];
+                var partsByHash = partsByPipe.ElementAtOrDefault(1)?.Split('#', StringSplitOptions.RemoveEmptyEntries);
+                var entityType = partsByHash?.ElementAtOrDefault(0);
+                var partsByColon = partsByHash?
+                    .ElementAtOrDefault(1)?
+                    .Split(':', StringSplitOptions.RemoveEmptyEntries);
+                var origin = partsByColon?.ElementAtOrDefault(0);
+                var idPropertyName = partsByColon?.ElementAtOrDefault(1);
 
                 if (!string.IsNullOrWhiteSpace(entityEdgeType) &&
                     !string.IsNullOrWhiteSpace(entityType) &&
