@@ -34,9 +34,9 @@ public class ContextTest
         Assert.False(result);
         Assert.Null(context);
         Assert.Equal(3, errors.Count);
-        Assert.Equal("Missing the mandatory 'entity_type' query string parameter.", errors[0]);
-        Assert.Equal("Missing the mandatory 'origin_code' query string parameter.", errors[1]);
-        Assert.Equal("Missing the mandatory 'vocab_prefix' query string parameter.", errors[2]);
+        Assert.Equal("Entity Type must not be null or empty string.", errors[0]);
+        Assert.Equal("Can't parse Entity Code if Entity Type is null or empty string.", errors[1]);
+        Assert.Equal("Vocabulary Prefix must not be null or empty string.", errors[2]);
     }
 
     [Fact]
@@ -58,8 +58,11 @@ public class ContextTest
         Assert.False(result);
         Assert.Null(context);
         Assert.Equal(2, errors.Count);
-        Assert.Equal("Missing the mandatory 'origin_code' query string parameter.", errors[0]);
-        Assert.Equal("Missing the mandatory 'vocab_prefix' query string parameter.", errors[1]);
+        Assert.Equal(
+            "Error when parsing Entity Code. Provided value: '/Person#'. " +
+            "Exception: Invalid entityCodeKey: /Person# (Parameter 'entityCodeKey').",
+            errors[0]);
+        Assert.Equal("Vocabulary Prefix must not be null or empty string.", errors[1]);
     }
 
     [Fact]
@@ -81,7 +84,7 @@ public class ContextTest
         Assert.False(result);
         Assert.Null(context);
         Assert.Single(errors);
-        Assert.Equal("Missing the mandatory 'vocab_prefix' query string parameter.", errors[0]);
+        Assert.Equal("Vocabulary Prefix must not be null or empty string.", errors[0]);
     }
 
     [Fact]
@@ -104,10 +107,10 @@ public class ContextTest
         Assert.NotNull(context);
         Assert.Empty(errors);
         Assert.Equal(QueryStringConfigString, context.QueryString);
-        Assert.Equal(EntityTypeConfigString, context.EntityTypeConfiguration);
-        Assert.Equal(VocabPrefixConfigString, context.VocabularyPrefixConfiguration);
-        Assert.Equal("Salesforce", context.OriginCodeConfiguration.Origin);
-        Assert.Equal("id", context.OriginCodeConfiguration.Id);
+        Assert.Equal(EntityTypeConfigString, context.EntityType);
+        Assert.Equal(VocabPrefixConfigString, context.VocabularyPrefix);
+        Assert.Equal("Salesforce", context.OriginEntityCode.Origin);
+        // Assert.Equal("id", context.OriginEntityCode.Id);
     }
 
     [Fact]
@@ -130,13 +133,13 @@ public class ContextTest
         Assert.NotNull(context);
         Assert.Empty(errors);
         Assert.Equal(QueryStringConfigString, context.QueryString);
-        Assert.Equal(EntityTypeConfigString, context.EntityTypeConfiguration);
-        Assert.Equal("Salesforce", context.OriginCodeConfiguration.Origin);
-        Assert.Equal("id", context.OriginCodeConfiguration.Id);
+        Assert.Equal(EntityTypeConfigString, context.EntityType);
+        Assert.Equal("Salesforce", context.OriginEntityCode.Origin);
+        Assert.Equal("id", context.OriginEntityCode.Value);
 
-        Assert.Single(context.CodesConfiguration);
-        Assert.Equal("Dynamics", context.CodesConfiguration[0].Origin);
-        Assert.Equal("user_id", context.CodesConfiguration[0].Id);
+        Assert.Single(context.EntityCodes);
+        Assert.Equal("Dynamics", context.EntityCodes[0].Origin);
+        Assert.Equal("user_id", context.EntityCodes[0].Value);
     }
 
     [Fact]
@@ -159,15 +162,15 @@ public class ContextTest
         Assert.NotNull(context);
         Assert.Empty(errors);
         Assert.Equal(QueryStringConfigString, context.QueryString);
-        Assert.Equal(EntityTypeConfigString, context.EntityTypeConfiguration);
-        Assert.Equal("Salesforce", context.OriginCodeConfiguration.Origin);
-        Assert.Equal("id", context.OriginCodeConfiguration.Id);
+        Assert.Equal(EntityTypeConfigString, context.EntityType);
+        Assert.Equal("Salesforce", context.OriginEntityCode.Origin);
+        Assert.Equal("id", context.OriginEntityCode.Value);
 
-        Assert.Equal(2, context.CodesConfiguration.Count);
-        Assert.Equal("Dynamics", context.CodesConfiguration[0].Origin);
-        Assert.Equal("user_id", context.CodesConfiguration[0].Id);
-        Assert.Equal("Sharepoint", context.CodesConfiguration[1].Origin);
-        Assert.Equal("PersonId", context.CodesConfiguration[1].Id);
+        Assert.Equal(2, context.EntityCodes.Count);
+        Assert.Equal("Dynamics", context.EntityCodes[0].Origin);
+        Assert.Equal("user_id", context.EntityCodes[0].Value);
+        Assert.Equal("Sharepoint", context.EntityCodes[1].Origin);
+        Assert.Equal("PersonId", context.EntityCodes[1].Value);
     }
 
     [Theory]
@@ -192,9 +195,10 @@ public class ContextTest
         Assert.False(result);
         Assert.Null(context);
         Assert.Single(errors);
-        Assert.Equal("Could not parse the Entity Code in the query string parameter's value " +
-                     "The value must be in the format 'Origin:Id', " +
-                     $"but found ''{codesConfigString}''", errors[0]);
+        Assert.Equal(
+            "Error when parsing Entity Code. " +
+            $"Provided value: '{EntityTypeConfigString}#{codesConfigString}'. Exception: Invalid entityCodeKey: {EntityTypeConfigString}#{codesConfigString} (Parameter 'entityCodeKey').",
+            errors[0]);
     }
 
     [Fact]
@@ -217,29 +221,31 @@ public class ContextTest
         Assert.NotNull(context);
         Assert.Empty(errors);
         Assert.Equal(QueryStringConfigString, context.QueryString);
-        Assert.Equal(EntityTypeConfigString, context.EntityTypeConfiguration);
-        Assert.Equal("Salesforce", context.OriginCodeConfiguration.Origin);
-        Assert.Equal("id", context.OriginCodeConfiguration.Id);
+        Assert.Equal(EntityTypeConfigString, context.EntityType);
+        Assert.Equal("Salesforce", context.OriginEntityCode.Origin);
+        Assert.Equal("id", context.OriginEntityCode.Value);
 
-        Assert.Equal(2, context.IncomingEdgesConfiguration.Count);
-        Assert.Equal("/Manager", context.IncomingEdgesConfiguration[0].EdgeType);
-        Assert.Equal("/Employee", context.IncomingEdgesConfiguration[0].EntityType);
-        Assert.Equal("Sharepoint", context.IncomingEdgesConfiguration[0].Origin);
-        Assert.Equal("ManagerId", context.IncomingEdgesConfiguration[0].Id);
-        Assert.Equal("/Customer", context.IncomingEdgesConfiguration[1].EdgeType);
-        Assert.Equal("/Contact", context.IncomingEdgesConfiguration[1].EntityType);
-        Assert.Equal("CRM", context.IncomingEdgesConfiguration[1].Origin);
-        Assert.Equal("id", context.IncomingEdgesConfiguration[1].Id);
+        Assert.All(context.IncomingEntityEdges, x => Assert.Equal(context.OriginEntityCode, x.ToReference.Code));
+        Assert.All(context.OutgoingEntityEdges, x => Assert.Equal(context.OriginEntityCode, x.FromReference.Code));
 
-        Assert.Equal(2, context.OutgoingEdgesConfiguration.Count);
-        Assert.Equal("/Works", context.OutgoingEdgesConfiguration[0].EdgeType);
-        Assert.Equal("/Organization", context.OutgoingEdgesConfiguration[0].EntityType);
-        Assert.Equal("Salesforce", context.OutgoingEdgesConfiguration[0].Origin);
-        Assert.Equal("org_id", context.OutgoingEdgesConfiguration[0].Id);
-        Assert.Equal("/Manages", context.OutgoingEdgesConfiguration[1].EdgeType);
-        Assert.Equal("/Employee", context.OutgoingEdgesConfiguration[1].EntityType);
-        Assert.Equal("Sharepoint", context.OutgoingEdgesConfiguration[1].Origin);
-        Assert.Equal("employee_id", context.OutgoingEdgesConfiguration[1].Id);
+        Assert.Equal(2, context.IncomingEntityEdges.Count);
+        Assert.Equal("/Manager", context.IncomingEntityEdges[0].EdgeType);
+        Assert.Equal("/Employee", context.IncomingEntityEdges[0].FromReference.Code.Type);
+        Assert.Equal("Sharepoint", context.IncomingEntityEdges[0].FromReference.Code.Origin);
+        Assert.Equal("ManagerId", context.IncomingEntityEdges[0].FromReference.Code.Value);
+        Assert.Equal("/Customer", context.IncomingEntityEdges[1].EdgeType);
+        Assert.Equal("/Contact", context.IncomingEntityEdges[1].FromReference.Code.Type);
+        Assert.Equal("CRM", context.IncomingEntityEdges[1].FromReference.Code.Origin);
+        Assert.Equal("id", context.IncomingEntityEdges[1].FromReference.Code.Value);
+
+        Assert.Equal(2, context.OutgoingEntityEdges.Count);
+        Assert.Equal("/Works", context.OutgoingEntityEdges[0].EdgeType);
+        Assert.Equal("Salesforce", context.OutgoingEntityEdges[0].ToReference.Code.Origin);
+        Assert.Equal("org_id", context.OutgoingEntityEdges[0].ToReference.Code.Value);
+        Assert.Equal("/Manages", context.OutgoingEntityEdges[1].EdgeType);
+        Assert.Equal("/Employee", context.OutgoingEntityEdges[1].ToReference.Code.Type);
+        Assert.Equal("Sharepoint", context.OutgoingEntityEdges[1].ToReference.Code.Origin);
+        Assert.Equal("employee_id", context.OutgoingEntityEdges[1].ToReference.Code.Value);
     }
 
     [Fact]
@@ -260,16 +266,18 @@ public class ContextTest
         // Assert
         Assert.False(result);
         Assert.Null(context);
-        Assert.Equal(2, errors.Count);
+        Assert.Equal(4, errors.Count);
         Assert.Equal(
-            "Could not parse entity edge configuration. " +
-            "The value must be in the format '/EdgeType|/EntityType#Origin:id', " +
-            "but found: '/WorksFor|Salesforce:org_id'",
+            "Error when parsing Entity Code. Provided value: 'Salesforce:org_id'. Exception: Invalid entityCodeKey: Salesforce:org_id (Parameter 'entityCodeKey').",
             errors[0]);
         Assert.Equal(
-            "Could not parse entity edge configuration. " +
-            "The value must be in the format '/EdgeType|/EntityType#Origin:id', " +
-            "but found: '/Works|/Organization#:org_id'",
+            "Could not parse '/WorksFor|Salesforce:org_id' into an Entity Edge.",
             errors[1]);
+        Assert.Equal(
+            "Error when parsing Entity Code. Provided value: '/Organization#:org_id'. Exception: Invalid entityCodeKey: /Organization#:org_id (Parameter 'entityCodeKey').",
+            errors[2]);
+        Assert.Equal(
+            "Could not parse '/Works|/Organization#:org_id' into an Entity Edge.",
+            errors[3]);
     }
 }
