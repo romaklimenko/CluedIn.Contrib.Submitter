@@ -1,3 +1,5 @@
+using CluedIn.Core.Data;
+
 namespace CluedIn.Contrib.Submitter.Tests;
 
 public class ContextTest
@@ -16,12 +18,30 @@ public class ContextTest
                                                      "/Manages|/Employee#Sharepoint:employee_id,";
 
     [Fact]
+    public void ClueHashes()
+    {
+        var organizationId = Guid.NewGuid();
+        var clue0 = new Clue(EntityCode.FromKey("/Person#Salesforce:1"), organizationId);
+        clue0.Data.EntityData.Properties["foo"] = "bar";
+        clue0.Data.Attributes.Add("batch-id", Guid.NewGuid().ToString());
+
+        var clue1 = new Clue(EntityCode.FromKey("/Person#Salesforce:1"), organizationId);
+        clue1.Data.EntityData.Properties["foo"] = "bar";
+
+        Assert.Equal(clue0.ComputeHash(), clue1.ComputeHash());
+
+
+    }
+
+    [Fact]
     public void TryCreate_WrongParameters_ReturnsErrors()
     {
         // Arrange
         // Act
         var result = Context.TryCreate(
             QueryStringConfigString,
+            Guid.NewGuid(),
+            null,
             null,
             null,
             null,
@@ -46,6 +66,8 @@ public class ContextTest
         // Act
         var result = Context.TryCreate(
             QueryStringConfigString,
+            Guid.NewGuid(),
+            null,
             EntityTypeConfigString,
             null,
             null,
@@ -72,6 +94,8 @@ public class ContextTest
         // Act
         var result = Context.TryCreate(
             QueryStringConfigString,
+            Guid.NewGuid(),
+            null,
             EntityTypeConfigString,
             OriginCodeConfigString,
             null,
@@ -94,6 +118,8 @@ public class ContextTest
         // Act
         var result = Context.TryCreate(
             QueryStringConfigString,
+            Guid.NewGuid(),
+            null,
             EntityTypeConfigString,
             OriginCodeConfigString,
             VocabPrefixConfigString,
@@ -109,7 +135,7 @@ public class ContextTest
         Assert.Equal(QueryStringConfigString, context.QueryString);
         Assert.Equal(EntityTypeConfigString, context.EntityType);
         Assert.Equal(VocabPrefixConfigString, context.VocabularyPrefix);
-        Assert.Equal("Salesforce", context.OriginEntityCode.Origin);
+        Assert.Equal("Salesforce", context.OriginEntityCodeTemplate.Origin);
         // Assert.Equal("id", context.OriginEntityCode.Id);
     }
 
@@ -120,6 +146,8 @@ public class ContextTest
         // Act
         var result = Context.TryCreate(
             QueryStringConfigString,
+            Guid.NewGuid(),
+            null,
             EntityTypeConfigString,
             OriginCodeConfigString,
             VocabPrefixConfigString,
@@ -134,12 +162,12 @@ public class ContextTest
         Assert.Empty(errors);
         Assert.Equal(QueryStringConfigString, context.QueryString);
         Assert.Equal(EntityTypeConfigString, context.EntityType);
-        Assert.Equal("Salesforce", context.OriginEntityCode.Origin);
-        Assert.Equal("id", context.OriginEntityCode.Value);
+        Assert.Equal("Salesforce", context.OriginEntityCodeTemplate.Origin);
+        Assert.Equal("id", context.OriginEntityCodeTemplate.Value);
 
-        Assert.Single(context.EntityCodes);
-        Assert.Equal("Dynamics", context.EntityCodes[0].Origin);
-        Assert.Equal("user_id", context.EntityCodes[0].Value);
+        Assert.Single(context.EntityCodeTemplates);
+        Assert.Equal("Dynamics", context.EntityCodeTemplates[0].Origin);
+        Assert.Equal("user_id", context.EntityCodeTemplates[0].Value);
     }
 
     [Fact]
@@ -149,6 +177,8 @@ public class ContextTest
         // Act
         var result = Context.TryCreate(
             QueryStringConfigString,
+            Guid.NewGuid(),
+            null,
             EntityTypeConfigString,
             OriginCodeConfigString,
             VocabPrefixConfigString,
@@ -163,14 +193,14 @@ public class ContextTest
         Assert.Empty(errors);
         Assert.Equal(QueryStringConfigString, context.QueryString);
         Assert.Equal(EntityTypeConfigString, context.EntityType);
-        Assert.Equal("Salesforce", context.OriginEntityCode.Origin);
-        Assert.Equal("id", context.OriginEntityCode.Value);
+        Assert.Equal("Salesforce", context.OriginEntityCodeTemplate.Origin);
+        Assert.Equal("id", context.OriginEntityCodeTemplate.Value);
 
-        Assert.Equal(2, context.EntityCodes.Count);
-        Assert.Equal("Dynamics", context.EntityCodes[0].Origin);
-        Assert.Equal("user_id", context.EntityCodes[0].Value);
-        Assert.Equal("Sharepoint", context.EntityCodes[1].Origin);
-        Assert.Equal("PersonId", context.EntityCodes[1].Value);
+        Assert.Equal(2, context.EntityCodeTemplates.Count);
+        Assert.Equal("Dynamics", context.EntityCodeTemplates[0].Origin);
+        Assert.Equal("user_id", context.EntityCodeTemplates[0].Value);
+        Assert.Equal("Sharepoint", context.EntityCodeTemplates[1].Origin);
+        Assert.Equal("PersonId", context.EntityCodeTemplates[1].Value);
     }
 
     [Theory]
@@ -183,6 +213,8 @@ public class ContextTest
         // Act
         var result = Context.TryCreate(
             QueryStringConfigString,
+            Guid.NewGuid(),
+            null,
             EntityTypeConfigString,
             OriginCodeConfigString,
             VocabPrefixConfigString,
@@ -208,6 +240,8 @@ public class ContextTest
         // Act
         var result = Context.TryCreate(
             QueryStringConfigString,
+            Guid.NewGuid(),
+            null,
             EntityTypeConfigString,
             OriginCodeConfigString,
             VocabPrefixConfigString,
@@ -222,30 +256,30 @@ public class ContextTest
         Assert.Empty(errors);
         Assert.Equal(QueryStringConfigString, context.QueryString);
         Assert.Equal(EntityTypeConfigString, context.EntityType);
-        Assert.Equal("Salesforce", context.OriginEntityCode.Origin);
-        Assert.Equal("id", context.OriginEntityCode.Value);
+        Assert.Equal("Salesforce", context.OriginEntityCodeTemplate.Origin);
+        Assert.Equal("id", context.OriginEntityCodeTemplate.Value);
 
-        Assert.All(context.IncomingEntityEdges, x => Assert.Equal(context.OriginEntityCode, x.ToReference.Code));
-        Assert.All(context.OutgoingEntityEdges, x => Assert.Equal(context.OriginEntityCode, x.FromReference.Code));
+        Assert.All(context.IncomingEntityEdgeTemplates, x => Assert.Equal(context.OriginEntityCodeTemplate, x.ToReference.Code));
+        Assert.All(context.OutgoingEntityEdgeTemplates, x => Assert.Equal(context.OriginEntityCodeTemplate, x.FromReference.Code));
 
-        Assert.Equal(2, context.IncomingEntityEdges.Count);
-        Assert.Equal("/Manager", context.IncomingEntityEdges[0].EdgeType);
-        Assert.Equal("/Employee", context.IncomingEntityEdges[0].FromReference.Code.Type);
-        Assert.Equal("Sharepoint", context.IncomingEntityEdges[0].FromReference.Code.Origin);
-        Assert.Equal("ManagerId", context.IncomingEntityEdges[0].FromReference.Code.Value);
-        Assert.Equal("/Customer", context.IncomingEntityEdges[1].EdgeType);
-        Assert.Equal("/Contact", context.IncomingEntityEdges[1].FromReference.Code.Type);
-        Assert.Equal("CRM", context.IncomingEntityEdges[1].FromReference.Code.Origin);
-        Assert.Equal("id", context.IncomingEntityEdges[1].FromReference.Code.Value);
+        Assert.Equal(2, context.IncomingEntityEdgeTemplates.Count);
+        Assert.Equal("/Manager", context.IncomingEntityEdgeTemplates[0].EdgeType);
+        Assert.Equal("/Employee", context.IncomingEntityEdgeTemplates[0].FromReference.Code.Type);
+        Assert.Equal("Sharepoint", context.IncomingEntityEdgeTemplates[0].FromReference.Code.Origin);
+        Assert.Equal("ManagerId", context.IncomingEntityEdgeTemplates[0].FromReference.Code.Value);
+        Assert.Equal("/Customer", context.IncomingEntityEdgeTemplates[1].EdgeType);
+        Assert.Equal("/Contact", context.IncomingEntityEdgeTemplates[1].FromReference.Code.Type);
+        Assert.Equal("CRM", context.IncomingEntityEdgeTemplates[1].FromReference.Code.Origin);
+        Assert.Equal("id", context.IncomingEntityEdgeTemplates[1].FromReference.Code.Value);
 
-        Assert.Equal(2, context.OutgoingEntityEdges.Count);
-        Assert.Equal("/Works", context.OutgoingEntityEdges[0].EdgeType);
-        Assert.Equal("Salesforce", context.OutgoingEntityEdges[0].ToReference.Code.Origin);
-        Assert.Equal("org_id", context.OutgoingEntityEdges[0].ToReference.Code.Value);
-        Assert.Equal("/Manages", context.OutgoingEntityEdges[1].EdgeType);
-        Assert.Equal("/Employee", context.OutgoingEntityEdges[1].ToReference.Code.Type);
-        Assert.Equal("Sharepoint", context.OutgoingEntityEdges[1].ToReference.Code.Origin);
-        Assert.Equal("employee_id", context.OutgoingEntityEdges[1].ToReference.Code.Value);
+        Assert.Equal(2, context.OutgoingEntityEdgeTemplates.Count);
+        Assert.Equal("/Works", context.OutgoingEntityEdgeTemplates[0].EdgeType);
+        Assert.Equal("Salesforce", context.OutgoingEntityEdgeTemplates[0].ToReference.Code.Origin);
+        Assert.Equal("org_id", context.OutgoingEntityEdgeTemplates[0].ToReference.Code.Value);
+        Assert.Equal("/Manages", context.OutgoingEntityEdgeTemplates[1].EdgeType);
+        Assert.Equal("/Employee", context.OutgoingEntityEdgeTemplates[1].ToReference.Code.Type);
+        Assert.Equal("Sharepoint", context.OutgoingEntityEdgeTemplates[1].ToReference.Code.Origin);
+        Assert.Equal("employee_id", context.OutgoingEntityEdgeTemplates[1].ToReference.Code.Value);
     }
 
     [Fact]
@@ -255,6 +289,8 @@ public class ContextTest
         // Act
         var result = Context.TryCreate(
             QueryStringConfigString,
+            Guid.NewGuid(),
+            null,
             EntityTypeConfigString,
             OriginCodeConfigString,
             VocabPrefixConfigString,

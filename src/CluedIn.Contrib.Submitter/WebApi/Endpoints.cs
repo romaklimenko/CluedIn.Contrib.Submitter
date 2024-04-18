@@ -1,31 +1,64 @@
 using System.Net;
 using System.Text.Json;
-using Castle.Windsor;
 using CluedIn.Contrib.Submitter.Mapping;
-using CluedIn.Core;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CluedIn.Contrib.Submitter.WebApi;
 
 public static class Endpoints
 {
-    private static readonly ApplicationContext s_applicationContext = new(new WindsorContainer());
-
     public static async Task<IResult> SubmitData(
-        HttpRequest httpRequest,
+        HttpContext httpContext,
+        [FromQuery(Name = "name")] string? nameConfigString = null,
         [FromQuery(Name = "entity_type")] string? entityTypeConfigString = null,
         [FromQuery(Name = "origin_code")] string? originCodeConfigString = null,
         [FromQuery(Name = "vocab_prefix")] string? vocabPrefixConfigString = null,
         [FromQuery(Name = "codes")] string? codesConfigString = null,
-        [FromQuery(Name = "in_edges")] string? incomingEdgesConfigString = null,
-        [FromQuery(Name = "out_edges")] string? outgoingEdgesConfig = null,
-        [FromHeader(Name = "Authorization")] string? authorization = null)
+        [FromQuery(Name = "incoming_edges")] string? incomingEdgesConfigString = null,
+        [FromQuery(Name = "outgoing_edges")] string? outgoingEdgesConfig = null)
     {
-        // TODO: Step 0: Authorization
-
         // Step 1: Context
+        var errors = new List<string>();
+
+        if (!Guid.TryParse(
+                httpContext.User.Claims
+                    .FirstOrDefault(x => x.Type == "OrganizationId")?.Value,
+                out var organizationId))
+        {
+            errors.Add("Missing the mandatory 'OrganizationId' Authorization header parameter.");
+        }
+
+        if (string.IsNullOrWhiteSpace(entityTypeConfigString))
+        {
+            errors.Add("Missing the mandatory 'entity_type' query string parameter.");
+        }
+
+        if (string.IsNullOrWhiteSpace(codesConfigString))
+        {
+            errors.Add("Missing the mandatory 'code' query string parameter.");
+        }
+
+        if (string.IsNullOrWhiteSpace(vocabPrefixConfigString))
+        {
+            errors.Add("Missing the mandatory 'vocab_prefix' query string parameter.");
+        }
+
+        if (errors.Count > 0)
+        {
+            return Results.BadRequest(
+                new
+                {
+                    query_string = httpContext.Request.QueryString.Value,
+                    status_code = 400,
+                    status_description = "Bad Request",
+                    errors
+                });
+        }
+
         if (!Context.TryCreate(
-                httpRequest.QueryString.ToString(),
+                httpContext.Request.QueryString.ToString(),
+                organizationId,
+                nameConfigString,
                 entityTypeConfigString,
                 originCodeConfigString,
                 vocabPrefixConfigString,
@@ -33,12 +66,12 @@ public static class Endpoints
                 incomingEdgesConfigString,
                 outgoingEdgesConfig,
                 out var context,
-                out var errors))
+                out errors))
         {
             return Results.BadRequest(
                 new
                 {
-                    query_string = httpRequest.QueryString,
+                    query_string = httpContext.Request.QueryString,
                     status_code = 400,
                     status_description = "Bad Request",
                     errors
@@ -54,11 +87,17 @@ public static class Endpoints
 
 
         // Step 3: For each record in the payload, create and publish a clue
+        context.ReceivedCount = jsonDocument.RootElement.GetArrayLength();
         foreach (var jsonElement in jsonDocument.RootElement.EnumerateArray())
         {
             try
             {
-                jsonElement.Flatten().ToClue(context);
+                if (jsonElement.Flatten().ToClue(context) == null)
+                {
+                    return context.ToResult(HttpStatusCode.BadRequest);
+                }
+
+                context.AcceptedCount++;
             }
             catch (Exception e)
             {
@@ -73,18 +112,11 @@ public static class Endpoints
         // Step 4: Response
         return context.ToResult(HttpStatusCode.OK);
 
-        // var clue = new Clue(
-        //     new EntityCode("/Person", "Submitter", Guid.NewGuid()),
-        //     Guid.NewGuid());
-        // var compressedClue = CompressedClue.Compress(clue, applicationContext);
-        // var command = new ProcessClueCommand(new JobRunId(Guid.NewGuid(), Guid.NewGuid()), compressedClue);
-        // return Results.Json(new { clues = new List<string> { clue.Serialize() }, status = "OK" });
-
         async Task<JsonDocument?> TryParseJsonDocument()
         {
             try
             {
-                var doc = await JsonDocument.ParseAsync(httpRequest.Body);
+                var doc = await JsonDocument.ParseAsync(httpContext.Request.Body);
                 if (doc.RootElement.ValueKind == JsonValueKind.Array)
                 {
                     return doc;

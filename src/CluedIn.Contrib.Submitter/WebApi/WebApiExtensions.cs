@@ -15,15 +15,35 @@ public static class WebApiExtensions
     {
         var submitDataResponse = new SubmitDataResponse
         {
+            Submission = new { id = context.SubmissionId, timestamp = context.SubmissionTimestamp },
             QueryString = context.QueryString,
-            SubmissionId = context.SubmissionId,
-            SubmissionTimestamp = context.SubmissionTimestamp,
-            StatusCode = (int)httpStatusCode,
-            StatusDescription = GetReasonPhrase((int)httpStatusCode),
+            Configuration = new Dictionary<string, string?>
+            {
+                { "name_template", context.NameTemplate },
+                { "origin_entity_code_template", context.OriginEntityCodeTemplate.ToString() },
+                { "entity_type", context.EntityType },
+                { "vocabulary_prefix", context.VocabularyPrefix },
+                {
+                    "entity_code_templates",
+                    string.Join(',', context.EntityCodeTemplates.Select(x => x.ToString()))
+                },
+                {
+                    "incoming_edges_templates",
+                    string.Join(',', context.IncomingEntityEdgeTemplates.Select(x => x.ToString()))
+                },
+                {
+                    "outgoing_edges_templates",
+                    string.Join(',', context.OutgoingEntityEdgeTemplates.Select(x => x.ToString()))
+                }
+            },
+            Status = new { code = (int)httpStatusCode, description = GetReasonPhrase((int)httpStatusCode) },
             Errors = context.Errors,
-            ReceivedCount = context.ReceivedCount,
-            AcceptedCount = context.AcceptedCount,
-            RejectedCount = context.RejectedCount
+            Records = new Dictionary<string, int>
+            {
+                { "received", context.ReceivedCount },
+                { "accepted", context.AcceptedCount },
+                { "rejected", context.ReceivedCount - context.AcceptedCount }
+            }
         };
 
         return Results.Json(submitDataResponse, statusCode: (int)httpStatusCode);
