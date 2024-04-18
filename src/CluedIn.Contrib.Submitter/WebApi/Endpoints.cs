@@ -79,7 +79,8 @@ public static class Endpoints
         }
 
         // Step2: Deserialize and validate payload
-        using var jsonDocument = await TryParseJsonDocument();
+        using var jsonDocument = await TryParseJsonDocument()
+            .ConfigureAwait(false);
         if (jsonDocument is null)
         {
             return context.ToResult(HttpStatusCode.BadRequest);
@@ -116,7 +117,8 @@ public static class Endpoints
         {
             try
             {
-                var doc = await JsonDocument.ParseAsync(httpContext.Request.Body);
+                var doc = await JsonDocument.ParseAsync(httpContext.Request.Body)
+                    .ConfigureAwait(false);
                 if (doc.RootElement.ValueKind == JsonValueKind.Array)
                 {
                     return doc;

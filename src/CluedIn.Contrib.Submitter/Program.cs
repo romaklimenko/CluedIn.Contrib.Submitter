@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddRequestDecompression();
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -30,6 +31,7 @@ builder.Services.AddAuthorizationBuilder()
 
 var app = builder.Build();
 
+app.UseRequestDecompression();
 app.UseAuthentication();
 app.UseAuthorization();
 

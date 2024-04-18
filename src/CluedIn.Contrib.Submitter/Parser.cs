@@ -155,8 +155,6 @@ public static class Parser
                 _ => throw new ArgumentOutOfRangeException(nameof(edgeDirection), edgeDirection, null)
             };
             return true;
-
-            return false;
         }
         catch (Exception e)
         {

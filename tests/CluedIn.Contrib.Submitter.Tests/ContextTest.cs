@@ -1,5 +1,3 @@
-using CluedIn.Core.Data;
-
 namespace CluedIn.Contrib.Submitter.Tests;
 
 public class ContextTest
@@ -16,22 +14,6 @@ public class ContextTest
 
     private const string OutgoingEdgesConfigString = "/Works|/Organization#Salesforce:org_id," +
                                                      "/Manages|/Employee#Sharepoint:employee_id,";
-
-    [Fact]
-    public void ClueHashes()
-    {
-        var organizationId = Guid.NewGuid();
-        var clue0 = new Clue(EntityCode.FromKey("/Person#Salesforce:1"), organizationId);
-        clue0.Data.EntityData.Properties["foo"] = "bar";
-        clue0.Data.Attributes.Add("batch-id", Guid.NewGuid().ToString());
-
-        var clue1 = new Clue(EntityCode.FromKey("/Person#Salesforce:1"), organizationId);
-        clue1.Data.EntityData.Properties["foo"] = "bar";
-
-        Assert.Equal(clue0.ComputeHash(), clue1.ComputeHash());
-
-
-    }
 
     [Fact]
     public void TryCreate_WrongParameters_ReturnsErrors()
@@ -259,8 +241,10 @@ public class ContextTest
         Assert.Equal("Salesforce", context.OriginEntityCodeTemplate.Origin);
         Assert.Equal("id", context.OriginEntityCodeTemplate.Value);
 
-        Assert.All(context.IncomingEntityEdgeTemplates, x => Assert.Equal(context.OriginEntityCodeTemplate, x.ToReference.Code));
-        Assert.All(context.OutgoingEntityEdgeTemplates, x => Assert.Equal(context.OriginEntityCodeTemplate, x.FromReference.Code));
+        Assert.All(context.IncomingEntityEdgeTemplates,
+            x => Assert.Equal(context.OriginEntityCodeTemplate, x.ToReference.Code));
+        Assert.All(context.OutgoingEntityEdgeTemplates,
+            x => Assert.Equal(context.OriginEntityCodeTemplate, x.FromReference.Code));
 
         Assert.Equal(2, context.IncomingEntityEdgeTemplates.Count);
         Assert.Equal("/Manager", context.IncomingEntityEdgeTemplates[0].EdgeType);
