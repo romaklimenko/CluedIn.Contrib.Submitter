@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="CluedIn.Core" Version="4.1.1"/>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4"/>
   </ItemGroup>
 
 </Project>
