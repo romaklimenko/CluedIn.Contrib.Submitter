@@ -1,0 +1,11 @@
+image:
+  repository: "romaklimenko/cluedin-contrib-submitter"
+  tag: "latest"
+
+submitter:
+  env:
+    CONCURRENCY_LIMITER_PERMIT_LIMIT: "1"
+    KESTREL_MAX_REQUEST_BODY_SIZE: "268435456" # 256MB
+    RABBITMQ_CONNECTION_STRING: "amqp://cluedin:yourStrong(!)Password@cluedin-rabbitmq:5672"
+  replicas: 1
+  domain: "127.0.0.1.sslip.io"

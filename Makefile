@@ -18,3 +18,6 @@ docker-compose-build:
 
 docker-compose-up:
 	docker-compose up
+
+helm-upgrade:
+	helm upgrade cluedin-contrib-submitter ./helm --install --history-max 3 --namespace cluedin --dry-run

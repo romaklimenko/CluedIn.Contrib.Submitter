@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluedin-contrib-submitter
+  labels:
+    app: cluedin-contrib-submitter
+spec:
+  replicas: {{ .Values.submitter.replicas }}
+  selector:
+    matchLabels:
+      app: cluedin-contrib-submitter
+  template:
+    metadata:
+      labels:
+        app: cluedin-contrib-submitter
+    spec:
+      containers:
+        - name: cluedin-contrib-submitter
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
+          imagePullPolicy: Always
+          env:
+            - name: AUTH_API
+              value: {{ printf "https://app.%s/auth/" .Values.submitter.domain | quote }}
+            - name: CONCURRENCY_LIMITER_PERMIT_LIMIT
+              value: {{ .Values.submitter.env.CONCURRENCY_LIMITER_PERMIT_LIMIT | quote }}
+            - name: KESTREL_MAX_REQUEST_BODY_SIZE
+              value: {{ .Values.submitter.env.KESTREL_MAX_REQUEST_BODY_SIZE | quote }}
+            - name: RABBITMQ_CONNECTION_STRING
+              value: {{ .Values.submitter.env.RABBITMQ_CONNECTION_STRING | quote }}
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "2Gi"
+              cpu: "1"
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]

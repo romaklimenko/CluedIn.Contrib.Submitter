@@ -1,0 +1,4 @@
+apiVersion: v2
+name: cluedin-contrib-submitter
+
+version: 0.0.1

@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cluedin-contrib-submitter
+  labels:
+    app: cluedin-contrib-submitter
+  annotations:
+    haproxy-ingress.github.io/ssl-redirect: 'false'
+spec:
+  ingressClassName: haproxy
+  tls:
+    - hosts:
+        - app.{{ .Values.submitter.domain }}
+      secretName: cluedin-frontend-crt
+  rules:
+    - host: '*.{{ .Values.submitter.domain }}'
+      http:
+        paths:
+          - path: /submitter
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: cluedin-contrib-submitter
+                port:
+                  number: 8080
