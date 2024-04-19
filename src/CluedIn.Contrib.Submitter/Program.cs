@@ -34,7 +34,7 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
-        var authUrl = GetStringEnvironmentVariable("AUTH_API", "http://cluedin-server:9001/");
+        var authUrl = Environment.GetEnvironmentVariable("AUTH_API");
         options.Authority = authUrl;
         options.Audience = "PublicApi";
         options.TokenValidationParameters = new TokenValidationParameters
