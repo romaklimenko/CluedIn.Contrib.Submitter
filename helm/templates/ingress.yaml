@@ -13,7 +13,7 @@ spec:
         - app.{{ .Values.submitter.domain }}
       secretName: cluedin-frontend-crt
   rules:
-    - host: '*.{{ .Values.submitter.domain }}'
+    - host: 'app.{{ .Values.submitter.domain }}'
       http:
         paths:
           - path: /submitter
