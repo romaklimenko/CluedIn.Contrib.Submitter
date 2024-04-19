@@ -11,37 +11,37 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddRateLimiter(
-        _ => _
+        rateLimiterOptions => rateLimiterOptions
             .AddConcurrencyLimiter(
                 concurrencyLimiterPermitLimit,
-                options =>
+                concurrencyLimiterOptions =>
                 {
-                    options.PermitLimit =
+                    concurrencyLimiterOptions.PermitLimit =
                         GetIntegerEnvironmentVariable(concurrencyLimiterPermitLimit, 1);
                 }));
 
-builder.WebHost.ConfigureKestrel(options =>
+builder.WebHost.ConfigureKestrel(kestrelServerOptions =>
 {
-    options.Limits.MaxRequestBodySize =
+    kestrelServerOptions.Limits.MaxRequestBodySize =
         GetIntegerEnvironmentVariable("KESTREL_MAX_REQUEST_BODY_SIZE", 1024 * 1024 * 256); // 128MB
 });
 
 builder.Services.AddRequestDecompression();
-builder.Services.AddAuthentication(options =>
+builder.Services.AddAuthentication(authenticationOptions =>
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        authenticationOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        authenticationOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddJwtBearer(options =>
+    .AddJwtBearer(jwtBearerOptions =>
     {
         var authUrl = Environment.GetEnvironmentVariable("AUTH_API");
-        options.Authority = authUrl;
-        options.Audience = "PublicApi";
-        options.TokenValidationParameters = new TokenValidationParameters
+        jwtBearerOptions.Authority = authUrl;
+        jwtBearerOptions.Audience = "PublicApi";
+        jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
         {
             ValidIssuer = authUrl, ValidateIssuerSigningKey = true
         };
-        options.SaveToken = true;
+        jwtBearerOptions.SaveToken = true;
     });
 
 builder.Services.AddAuthorizationBuilder()
