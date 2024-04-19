@@ -35,9 +35,9 @@ public static class Endpoints
             errors.Add("Missing the mandatory 'entity_type' query string parameter.");
         }
 
-        if (string.IsNullOrWhiteSpace(codesConfigString))
+        if (string.IsNullOrWhiteSpace(originCodeConfigString))
         {
-            errors.Add("Missing the mandatory 'code' query string parameter.");
+            errors.Add("Missing the mandatory 'origin_code' query string parameter.");
         }
 
         if (string.IsNullOrWhiteSpace(vocabPrefixConfigString))
