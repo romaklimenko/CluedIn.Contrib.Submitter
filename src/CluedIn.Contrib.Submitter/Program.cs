@@ -59,7 +59,7 @@ app.UseRequestDecompression();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => "Hello World!");
+app.MapGet("/", () => Results.Text("CluedIn.Contrib.Submitter is running!"));
 app.MapGet("/index.html", () => Results.LocalRedirect("/", true, true));
 
 app.MapPost("/data", Endpoints.SubmitData)
