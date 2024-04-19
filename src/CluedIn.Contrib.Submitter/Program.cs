@@ -1,8 +1,31 @@
 using CluedIn.Contrib.Submitter.WebApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using static CluedIn.Contrib.Submitter.Helpers.EnvironmentHelper;
+
+const string apiTokenPolicy = "API_TOKEN_POLICY";
+const string concurrencyLimiterPermitLimit = "CONCURRENCY_LIMITER_PERMIT_LIMIT";
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddRateLimiter(
+        _ => _
+            .AddConcurrencyLimiter(
+                concurrencyLimiterPermitLimit,
+                options =>
+                {
+                    options.PermitLimit =
+                        GetIntegerEnvironmentVariable(concurrencyLimiterPermitLimit, 1);
+                }));
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize =
+        GetIntegerEnvironmentVariable("KESTREL_MAX_REQUEST_BODY_SIZE", 1024 * 1024 * 256); // 128MB
+});
+
 builder.Services.AddRequestDecompression();
 builder.Services.AddAuthentication(options =>
     {
@@ -11,7 +34,7 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
-        var authUrl = Environment.GetEnvironmentVariable("AUTH_API") ?? "http://cluedin-server:9001/";
+        var authUrl = GetStringEnvironmentVariable("AUTH_API", "http://cluedin-server:9001/");
         options.Authority = authUrl;
         options.Audience = "PublicApi";
         options.TokenValidationParameters = new TokenValidationParameters
@@ -22,7 +45,7 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("api_token", policy =>
+    .AddPolicy(apiTokenPolicy, policy =>
     {
         policy.RequireAuthenticatedUser()
             .RequireRole("API")
@@ -31,6 +54,7 @@ builder.Services.AddAuthorizationBuilder()
 
 var app = builder.Build();
 
+app.UseRateLimiter();
 app.UseRequestDecompression();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -38,7 +62,8 @@ app.UseAuthorization();
 app.MapGet("/", () => "Hello World!");
 app.MapGet("/index.html", () => Results.LocalRedirect("/", true, true));
 
-app.MapPost("/data", Endpoints.SubmitData).RequireAuthorization("api_token");
-
+app.MapPost("/data", Endpoints.SubmitData)
+    .RequireAuthorization(apiTokenPolicy)
+    .RequireRateLimiting(concurrencyLimiterPermitLimit);
 
 app.Run();

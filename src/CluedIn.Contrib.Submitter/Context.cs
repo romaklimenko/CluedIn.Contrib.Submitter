@@ -1,5 +1,7 @@
+using CluedIn.Contrib.Submitter.Types;
 using CluedIn.Core.Data;
-using static CluedIn.Contrib.Submitter.Parser;
+using EasyNetQ;
+using static CluedIn.Contrib.Submitter.Helpers.ParsingHelper;
 
 namespace CluedIn.Contrib.Submitter;
 
@@ -32,6 +34,9 @@ public class Context
     // Submission properties
     public readonly string SubmissionId = Guid.NewGuid().ToString();
     public readonly long SubmissionTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+    // RabbitMQ
+    public IBus? Bus { get; set; }
 
     private Context(
         string queryString,

@@ -1,8 +1,9 @@
+using CluedIn.Contrib.Submitter.Types;
 using CluedIn.Core.Data;
 
-namespace CluedIn.Contrib.Submitter;
+namespace CluedIn.Contrib.Submitter.Helpers;
 
-public static class Parser
+public static class ParsingHelper
 {
     public static bool TryParseEntityType(string? entityTypeString, out EntityType? entityType, ref List<string> errors)
     {

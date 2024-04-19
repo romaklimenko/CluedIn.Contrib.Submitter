@@ -1,4 +1,4 @@
-namespace CluedIn.Contrib.Submitter;
+namespace CluedIn.Contrib.Submitter.Types;
 
 public enum EdgeDirection
 {

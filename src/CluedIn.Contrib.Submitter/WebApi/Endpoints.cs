@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json;
+using CluedIn.Contrib.Submitter.Helpers;
 using CluedIn.Contrib.Submitter.Mapping;
+using CluedIn.Contrib.Submitter.RabbitMQ;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CluedIn.Contrib.Submitter.WebApi;
@@ -86,17 +88,20 @@ public static class Endpoints
             return context.ToResult(HttpStatusCode.BadRequest);
         }
 
-
         // Step 3: For each record in the payload, create and publish a clue
         context.ReceivedCount = jsonDocument.RootElement.GetArrayLength();
         foreach (var jsonElement in jsonDocument.RootElement.EnumerateArray())
         {
             try
             {
-                if (jsonElement.Flatten().ToClue(context) == null)
+                var clue = jsonElement.Flatten().ToClue(context);
+                if (clue == null)
                 {
                     return context.ToResult(HttpStatusCode.BadRequest);
                 }
+
+                await clue.Publish(context)
+                    .ConfigureAwait(false);
 
                 context.AcceptedCount++;
             }
@@ -106,7 +111,7 @@ public static class Endpoints
                     $"Error when processing a record.\n" +
                     $"Record:{jsonElement.ToString()}\n" +
                     $"Exception:{e}\n{e.Message}");
-                return context.ToResult(HttpStatusCode.BadRequest);
+                return context.ToResult(HttpStatusCode.InternalServerError);
             }
         }
 
