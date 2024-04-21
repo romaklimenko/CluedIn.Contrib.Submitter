@@ -1,3 +1,4 @@
+using System.Xml;
 using CluedIn.Core.Data;
 
 namespace CluedIn.Contrib.Submitter.Mapping;
@@ -6,11 +7,18 @@ public static class ClueProducer
 {
     public static Clue? ToClue(this Dictionary<string, string> data, Context context)
     {
-        if (!data.TryGetValue(context.OriginEntityCodeTemplate.Value, out var originEntityCodeValue))
+        var sanitizedData = new Dictionary<string, string>();
+
+        foreach (var (k, v) in data)
+        {
+            sanitizedData[k] = new string(v.Where(XmlConvert.IsXmlChar).ToArray()).Trim();
+        }
+
+        if (!sanitizedData.TryGetValue(context.OriginEntityCodeTemplate.Value, out var originEntityCodeValue))
         {
             context.Errors.Add(
                 $"Can't get Origin Entity Code value of property '{context.OriginEntityCodeTemplate.Value}' " +
-                $"from record {data}.");
+                $"from record {sanitizedData}.");
             return null;
         }
 
@@ -27,7 +35,7 @@ public static class ClueProducer
 
         // Name
         if (!string.IsNullOrWhiteSpace(context.NameTemplate) &&
-            data.TryGetValue(context.NameTemplate, out var entityName))
+            sanitizedData.TryGetValue(context.NameTemplate, out var entityName))
         {
             entityData.Name = entityName;
         }
@@ -35,7 +43,7 @@ public static class ClueProducer
         // Codes
         foreach (var entityCodeTemplate in context.EntityCodeTemplates)
         {
-            if (data.TryGetValue(entityCodeTemplate.Value, out var value))
+            if (sanitizedData.TryGetValue(entityCodeTemplate.Value, out var value))
             {
                 entityData.Codes.Add(
                     new EntityCode(
@@ -46,7 +54,7 @@ public static class ClueProducer
         }
 
         // Properties
-        foreach (var (key, value) in data)
+        foreach (var (key, value) in sanitizedData)
         {
             entityData.Properties[$"{context.VocabularyPrefix}.{key}"] = value;
         }
@@ -55,7 +63,7 @@ public static class ClueProducer
         foreach (var entityEdgeTemplate in context.IncomingEntityEdgeTemplates)
         {
             var fromEntityCodeTemplate = entityEdgeTemplate.FromReference.Code;
-            if (!data.TryGetValue(fromEntityCodeTemplate.Value, out var fromEntityCodeValue))
+            if (!sanitizedData.TryGetValue(fromEntityCodeTemplate.Value, out var fromEntityCodeValue))
             {
                 continue;
             }
@@ -75,7 +83,7 @@ public static class ClueProducer
         foreach (var entityEdgeTemplate in context.OutgoingEntityEdgeTemplates)
         {
             var toEntityCodeTemplate = entityEdgeTemplate.ToReference.Code;
-            if (!data.TryGetValue(toEntityCodeTemplate.Value, out var toEntityCodeValue))
+            if (!sanitizedData.TryGetValue(toEntityCodeTemplate.Value, out var toEntityCodeValue))
             {
                 continue;
             }
