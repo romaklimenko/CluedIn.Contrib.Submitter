@@ -151,3 +151,5 @@ coverage.info
 
 # TODO files
 *.todo
+
+.values/

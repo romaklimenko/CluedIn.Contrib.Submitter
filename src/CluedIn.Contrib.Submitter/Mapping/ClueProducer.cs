@@ -1,4 +1,5 @@
 using System.Xml;
+using CluedIn.Contrib.Submitter.Helpers;
 using CluedIn.Core.Data;
 
 namespace CluedIn.Contrib.Submitter.Mapping;
@@ -27,7 +28,10 @@ public static class ClueProducer
             context.OriginEntityCodeTemplate.Origin,
             originEntityCodeValue);
 
-        var clue = new Clue(originEntityCode, context.OrganizationId);
+        var clue = new Clue(originEntityCode, context.OrganizationId)
+        {
+            Data = { OriginProviderDefinitionId = originEntityCode.Origin.Code.ToGuid() }, AppVersion = "2.17.0.0"
+        };
 
         var entityData = clue.Data.EntityData;
 
