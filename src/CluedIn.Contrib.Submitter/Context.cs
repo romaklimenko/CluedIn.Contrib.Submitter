@@ -22,6 +22,7 @@ public class Context
     public readonly List<EntityEdge> OutgoingEntityEdgeTemplates;
 
     public readonly Guid OrganizationId;
+    public readonly string? ProviderName;
 
     // Mapping state
     public readonly List<string> Errors = [];
@@ -47,7 +48,8 @@ public class Context
         string vocabularyPrefix,
         List<EntityCode> entityCodeTemplates,
         List<EntityEdge> incomingEntityEdgeTemplates,
-        List<EntityEdge> outgoingEntityEdgeTemplates)
+        List<EntityEdge> outgoingEntityEdgeTemplates,
+        string? providerName)
     {
         QueryString = queryString;
 
@@ -63,6 +65,8 @@ public class Context
         EntityCodeTemplates = entityCodeTemplates;
         IncomingEntityEdgeTemplates = incomingEntityEdgeTemplates;
         OutgoingEntityEdgeTemplates = outgoingEntityEdgeTemplates;
+
+        ProviderName = providerName;
     }
 
     public static bool TryCreate(
@@ -75,6 +79,7 @@ public class Context
         string? entityCodeTemplatessString,
         string? incomingEntityEdgeTemplatesString,
         string? outgoingEntityEdgeTemplatesString,
+        string? providerName,
         out Context context,
         out List<string> errors)
     {
@@ -113,7 +118,8 @@ public class Context
             vocabularyPrefixString!,
             entityCodeTemplates,
             incomingEntityEdges,
-            outgoingEntityEdges);
+            outgoingEntityEdges,
+            providerName);
 
         return true;
     }

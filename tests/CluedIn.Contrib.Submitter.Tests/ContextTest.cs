@@ -30,6 +30,7 @@ public class ContextTest
             null,
             null,
             null,
+            null,
             out var context,
             out var errors);
         // Assert
@@ -51,6 +52,7 @@ public class ContextTest
             Guid.NewGuid(),
             null,
             EntityTypeConfigString,
+            null,
             null,
             null,
             null,
@@ -84,6 +86,7 @@ public class ContextTest
             null,
             null,
             null,
+            null,
             out var context,
             out var errors);
         // Assert
@@ -105,6 +108,7 @@ public class ContextTest
             EntityTypeConfigString,
             OriginCodeConfigString,
             VocabPrefixConfigString,
+            null,
             null,
             null,
             null,
@@ -136,6 +140,7 @@ public class ContextTest
             "Dynamics:user_id",
             null,
             null,
+            null,
             out var context,
             out var errors);
         // Assert
@@ -165,6 +170,7 @@ public class ContextTest
             OriginCodeConfigString,
             VocabPrefixConfigString,
             CodesConfigString,
+            null,
             null,
             null,
             out var context,
@@ -203,6 +209,7 @@ public class ContextTest
             codesConfigString,
             null,
             null,
+            null,
             out var context,
             out var errors);
         // Assert
@@ -230,6 +237,7 @@ public class ContextTest
             null,
             IncomingEdgesConfigString,
             OutgoingEdgesConfigString,
+            null,
             out var context,
             out var errors);
         // Assert
@@ -281,6 +289,7 @@ public class ContextTest
             null,
             "/WorksFor|Salesforce:org_id",
             "/Works|/Organization#:org_id",
+            null,
             out var context,
             out var errors);
         // Assert

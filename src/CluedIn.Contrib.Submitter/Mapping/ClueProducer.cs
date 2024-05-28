@@ -30,7 +30,8 @@ public static class ClueProducer
 
         var clue = new Clue(originEntityCode, context.OrganizationId)
         {
-            Data = { OriginProviderDefinitionId = originEntityCode.Origin.Code.ToGuid() }, AppVersion = "2.17.0.0"
+            Data = { OriginProviderDefinitionId = (context.ProviderName ?? originEntityCode.Origin.Code).ToGuid() },
+            AppVersion = "2.17.0.0"
         };
 
         var entityData = clue.Data.EntityData;

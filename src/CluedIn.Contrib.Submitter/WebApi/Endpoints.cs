@@ -17,7 +17,8 @@ public static class Endpoints
         [FromQuery(Name = "vocab_prefix")] string? vocabPrefixConfigString = null,
         [FromQuery(Name = "codes")] string? codesConfigString = null,
         [FromQuery(Name = "incoming_edges")] string? incomingEdgesConfigString = null,
-        [FromQuery(Name = "outgoing_edges")] string? outgoingEdgesConfig = null)
+        [FromQuery(Name = "outgoing_edges")] string? outgoingEdgesConfig = null,
+        [FromQuery(Name = "provider_name")] string? providerName = null)
     {
         // Step 1: Context
         var errors = new List<string>();
@@ -67,6 +68,7 @@ public static class Endpoints
                 codesConfigString,
                 incomingEdgesConfigString,
                 outgoingEdgesConfig,
+                providerName,
                 out var context,
                 out errors))
         {
